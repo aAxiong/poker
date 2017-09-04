@@ -1,0 +1,353 @@
+﻿    <html>
+<head>
+
+    <meta name="Keywords" content="关键字">
+    <meta name="Description" content="内容">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport">
+    <meta content="no-cache,must-revalidate" http-equiv="Cache-Control">
+    <meta content="telephone=no, address=no" name="format-detection">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta content="no-cache" http-equiv="pragma">
+    <meta content="0" http-equiv="expires">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link href="css/poker.css" rel="stylesheet" />
+
+    <script src="js/1jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="js/2jquery.sha1.js"></script>
+    <script src="js/3donghua.js"></script>
+    <script src="js/3size.js"></script>
+    <script src="js/4poker.js"></script>
+    <script src="js/5type.js"></script>
+
+</head>
+<body>
+    <div class="startPage">
+        <img src="images/yd2.png" alt="" width="100%;">
+    </div>
+    <!--登录-->
+    <div class="login">
+        <h1>亿發登录中心</h1>
+        <div class="loginBox">
+            <div class="box_container">
+                <div class="loginLeft">
+                    <div class="login_co">
+                        <span>ID:</span><input type="text" id="login_co" />
+
+                    </div>
+                    <div class="login_co">
+                        <span> PWD:</span><input type="password" id="logon_co" />
+
+                    </div>
+                    <a class="goutxt">忘记密码?</a>
+                </div>
+                <div class="loginRight" id="loginRight">
+                    登录
+                </div>
+
+                <div class="clear"></div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- 忘记密码 -->
+     <div class="login forpwd">
+        <h1>亿發登录中心</h1>
+        <a class="guanbi">X</a>
+        <div class="loginBox">
+            <div class="box_container forgetpad">
+                <div class="loginLeft">
+                    <div class="login_co">
+                        <span>ID:</span><input type="text" id="forgetid" />
+
+                    </div>
+                    <div class="login_co">
+                        <span> PWD旧密码:</span><input type="password" id="forgetpwd" />
+                    </div>
+                     <div class="login_co">
+                        <span>MWD新密码:</span><input type="password" id="newspwd" />
+
+                    </div>
+                    <div class="login_co">
+                        <span> 确认新密码:</span><input type="password" id="newspwdtwo" />
+                    </div>
+                </div>
+                <div class="loginRight" id="arrayfix">
+                    <span>确认修改</span>
+                </div>
+
+                <div class="clear"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 启动页面选房 -->
+    <div class="RoomData" style="display:none;">
+        <div class="IDdata">
+
+            <span class="idname">ID</span>
+            <div class="idfra">
+                <p class="inum">00012ABC</p>
+                <p class="icredit">CREDIT</p>
+                <p class="icount">10000</p>
+            </div>
+            <div class="gooutchu">退出登录</div>
+
+        </div>
+        <div class="IRoom">
+            <ul class="Ioul"></ul>
+            <div class="clear"></div>
+        </div>
+        <!--<div class="" style="height:20%;"></div>-->
+    </div>
+    <!--桌子-->
+    <div class="table_index" style="display:none;">
+        <div class="table_tit">
+            <div class="titbox">
+                <div class="table_tbutton table_return">返回</div>
+                <span>房型：<a class="titboxnb">1</a>分</span>
+                <div class="table_tbutton table_null">空桌</div>
+            </div>
+        </div>
+        <div class="table_content">
+            <ul></ul>
+            <div class="clear"></div>
+        </div>
+
+    </div>
+
+
+    <div class="Integ startGame" style="display:none;">
+        <div class="stheight">
+            <div class="usezi">
+                <p class="p1">0</p>
+                <p class="p2">A001</p>
+                <p class="p3">CREDIT</p>
+                <P class="p4">0</P>
+                <P class="p5">BET<span>0</span></P>
+            </div>
+            <div class="intbarnd" style="margin-left: 0.3rem; ">
+                <ul class="intUl intUlGAME">
+                    <li>
+                        <span class="la txr2 ">5 OF A KIND</span>
+                        <span class="lb cl1">0</span>
+                    </li>
+                    <li>
+                        <span class="la cl1 txr2">ROYAL FLUSH</span>
+                        <span class="lb ">0</span>
+                    </li>
+                    <li>
+                        <span class="la txr2  ">STR FLUSH</span>
+                        <span class="lb cl1">0</span>
+                    </li>
+                    <li>
+                        <span class="la cl1 txr2">4 OF A KIND </span>
+                        <span class="lb ">0</span>
+                    </li>
+                    <li>
+                        <span class="la txr2 ">FULL HOUSE</span>
+                        <span class="lb cl1">0</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="intbarnd intbarnd2 ">
+                <ul class="intUl intUlGAME">
+                    <li>
+                        <span class="la cl1 txr">FLUSH</span>
+                        <span class="lb ">0</span>
+                    </li>
+                    <li>
+                        <span class="la txr ">STRAIGHT</span>
+                        <span class="lb cl1">0</span>
+                    </li>
+                    <li>
+                        <span class="la cl1 txr">3 OF A KIND</span>
+                        <span class="lb ">0</span>
+                    </li>
+                    <li>
+                        <span class="la txr ">2 PAIR</span>
+                        <span class="lb cl1">0</span>
+                    </li>
+                    <li>
+                        <span class="la cl1 txr">11 OR BETTER</span>
+                        <span class="lb ">0</span>
+                    </li>
+                </ul>
+            </div>
+            <div id="intbarndJp">
+                <div class="intbarndP">
+                    <p>JP</p>
+                    <a href="">2 OF A KIND</a>
+                </div>
+
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div class="cardfa">
+            <ul class="faul">
+                <li>
+                    <div><img class="peimg" src="images/pg.png"><span>HELD</span></div>
+                </li>
+                <li>
+                    <div><img class="peimg" src="images/pg.png"><span>HELD</span></div>
+                </li>
+                <li>
+                    <div><img class="peimg" src="images/pg.png"><span>HELD</span></div>
+                </li>
+                <li>
+                    <div><img class="peimg" src="images/pg.png"><span>HELD</span></div>
+                </li>
+                <li>
+                    <div><img class="peimg" src="images/pg.png"><span>HELD</span></div>
+                </li>
+            </ul>
+        </div>
+        <div class="cardbtn">
+            <div class="cbtn">
+                <a id="startgame">开始游戏</a>
+                <a>加一积分</a>
+                <a>加十积分</a>
+                <a>查底分</a>
+               
+            </div>
+            <div class="cbtn2">
+                <p>亿發</p>
+                <a id="goout">退出游戏</a>
+            </div>
+        </div>
+
+
+
+
+    </div>
+    <!-- 积分查看页面 -->
+    <div class="Integ hisPage" style="display:none;">
+        <div class="intReturn"><a href="#">返回</a></div>
+        <div class="clear"></div>
+        <div class="intbarnd plusBarnd" style="margin-left: 3rem; ">
+            <ul class="intUl">
+                <li>
+                    <span class="la  cl1">5 OF A KIND</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la ">ROYAL FLUSH</span>
+                    <span class="lb cl1">0</span>
+                </li>
+                <li>
+                    <span class="la  cl1">STR FLUSH</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la">4 OF A KIND </span>
+                    <span class="lb cl1">0</span>
+                </li>
+                <li>
+                    <span class="la  cl1">FULL HOUSE</span>
+                    <span class="lb">0</span>
+                </li>
+            </ul>
+        </div>
+        <div class="intbarnd intbarnd2 plusBarnd">
+            <ul class="intUl">
+                <li>
+                    <span class="la txr">FLUSH</span>
+                    <span class="lb cl1">0</span>
+                </li>
+                <li>
+                    <span class="la txr cl1">STRAIGHT</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la txr">3 OF A KIND</span>
+                    <span class="lb cl1">0</span>
+                </li>
+                <li>
+                    <span class="la txr cl1">2 PAIR</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la txr">JACKS OR BET</span>
+                    <span class="lb cl1">0</span>
+                </li>
+            </ul>
+        </div>
+        <div class="clear"></div>
+
+        <div class="intbarnd intbarnd3 plusBarnd">
+            <ul class="intUl">
+                <li>
+                    <span class="la txr">COINS IN</span>
+                    <span class="lb ">0</span>
+                </li>
+                <li>
+                    <span class="la txr ">NOTES IN</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la txr">COINS OUT</span>
+                    <span class="lb ">0</span>
+                </li>
+                <li>
+                    <span class="la txr ">DROP   O</span>
+                    <span class="lb">0</span>
+                </li>
+                <li>
+                    <span class="la txr">GAMES</span>
+                    <span class="lb ">0</span>
+                </li>
+                <li class="to">
+                    <span class="la txr"></span>
+                    <span class="lb "><a href="">+</a>0</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+   
+    <div class="tishi">
+        仅供娱乐，禁止赌博
+    </div>
+
+  <!--   <div class="chaoshi">
+         <div class="chaobg">
+             <p>您已经超过一小时未操作,系统将你移出桌子</p>
+             <div class="chaobtn">确定</div>
+         </div>
+    </div> -->
+
+   <!-- <audio id="chatAudio"></audio> -->
+   <!--   <audio id="jiafen" src="audio/ADD.mp3"></audio> -->
+
+   <!--  <audio id="pokerSound0" ></audio>-->
+
+
+
+<audio id="pokerSound" ></audio>
+
+
+
+  <!--   <audio id="pokerSound0" src="audio/0.mp3" preload="auto"></audio>-
+    <audio id="pokerSound1" src="audio/1.mp3" preload="auto"></audio>
+    <audio id="pokerSound2" src="audio/2.mp3" preload="auto"></audio>
+    <audio id="pokerSound3" src="audio/3.mp3" preload="auto"></audio>
+    <audio id="pokerSound4" src="audio/4.mp3" preload="auto"></audio> 
+ -->
+<!--     <audio id="pokerSound0"></audio> 
+    <audio id="pokerSound1"></audio> 
+    <audio id="pokerSound2"></audio> 
+    <audio id="pokerSound3"></audio> 
+    <audio id="pokerSound4"></audio> 
+
+    <audio id="pokerSound5"></audio>
+    <audio id="pokerSound6" ></audio> -->
+
+
+
+</body>
+</html>

@@ -12,7 +12,8 @@ var user = {  //用户信息
     tableNum: 0,        //桌号
     Chips: 0,           //  你的总资产    
     online:0,            //目前的状态 
-    token:""
+    token:"",
+    ws:""
 }
 
 var table = {  //用户所在桌子信息   
@@ -80,7 +81,7 @@ $(function(){
 
 PRO.PKstartGame = function(){
     
-    FastClick.attach(document.body);   //处理click 300ms 的延迟
+    //FastClick.attach(document.body);   //处理click 300ms 的延迟
 
 
      PRO.Requeset("version",0,{name:user.id},function(msg){
@@ -156,36 +157,9 @@ PRO.PKstartGame = function(){
  PRO.LocalStorage = function(){
      $(".startPage").delay(2000).transition({"opacity":0},500,function(){
          $(".startPage").hide();
-          // var value = localStorage.getItem("key"); 
-          // var valuep = localStorage.getItem("keyp"); 
-          // if(value&&valuep){
-          //      $("#login_co").val(value);   
-          //      $("#logon_co").val("*******");
-          //      PRO.Requeset2("autologin",2000,{id:value,password:valuep},function(msg){
-          //        console.log(msg);
-          //         if(msg.code == 200){
-          //             if(NetProblemBool==false){
-          //                 NetProblemBool = true;
-          //                 KCount = true;
-          //                 $(".prompt").remove();
-          //            }
-          //              user.token = msg.token;
-          //             PRO.Prompt('登录成功');
-          //             user.Chips = msg.integral; user.id = msg.user_id; PRO.Loading(); PRO.GetRoom();   $(".idfra .inum").text(user.id);  $(".idfra .icount").text(user.Chips);    $(".login").hide(); $(".RoomData").show(); 
-          //             PRO.StartGame();
-          //             PRO.playSound();
-          //         }else{
-          //            PRO.Prompt('密码已修改,请重新登录');
-          //         }
-          //      },function(){
-          //            PRO.Prompt('网络太慢,请过会再试');
-          //        })
-          // }
+
      });
     
-
-//     if (localStorage.startpage)     {  $(".startPage").hide(); } 
-//     else { localStorage.startpage = 1; $(".startPage").show(); }
  }
 
 
@@ -224,9 +198,6 @@ PRO.LoginGame = function(){
                           PRO.StartGame();
                           PRO.playSound();
                      }
-                      
-                         
-
                  },function(){
                     if(four){
                        NetProblemBool = false;
@@ -235,6 +206,7 @@ PRO.LoginGame = function(){
                       PRO.Prompt('网络太慢,正在努力加载中',2);
                     }else{
                       PRO.Prompt('服务器出现故障,请稍后再试'); 
+                        
                     }
                    
                  })              
@@ -250,7 +222,7 @@ PRO.LoginGame = function(){
 *
 */
 
-PRO.GetRoom = function () {
+PRO.GetRoom = function () {  
 
     var q = "区", f = "分";
     var IRoom = $(".IRoom .Ioul");
@@ -265,38 +237,94 @@ PRO.GetRoom = function () {
 
              if (msg.status == 100) {
 
-               PRO.GetOneTable(); //每秒发送请求
+              // PRO.GetOneTable(); //每秒发送请求
                 
                 // PRO.Gungongxi();  // 每秒发送消息
                 // PRO.GDXIAO();    //  每秒发送消息
 
                 var room = msg.data.rooms;
-                for (var i = 0; i < room.length; i++) {
-
-                    
+                for (var i = 0; i < room.length; i++) {      
                     $('<li id="' + room[i].id + '" level = "' + room[i].level + '"><span>' + room[i].level + f + (room[i].id).slice(2) + q + '</span></li>').appendTo(IRoom).click(function () {
-                         
+                      var id= $(this).attr("id");  //房间id
 
-
-                         if ($(this).attr("level") == 5 && user.Chips <= 20000) {
+                    if ($(this).attr("level") == 5 && user.Chips <= 20000) {
                             PRO.Prompt("分数不足,无法进入");
                          //  alert("你的分数没有到达进入这个房间的权利！");
                            return false;
                           }
+                      user.ws = new WebSocket("ws://139.199.6.159:2346");  //连接socket
+                        user.ws.onopen = function() {
+                            new_message = {
+                                type : 'roomIn',
+                                token :  user.token,
+                                room_id :id
+                            };
+                            user.ws.send(JSON.stringify(new_message));
+                        };
+                        user.ws.onmessage = function(e) {
+                            data=JSON.parse(e.data);
+                            if(data.status==500){
+                    $('<div class="chaoshi"><div class="chaobg"><p>您的账号已被他人登录，请重新登录</p><div class="chaobtn">确定</div></div></div>').appendTo($("body"));
+                    $(".chaobtn").click(function(){
+                        $(".cardbtn #goout").click();
+                        $(this).parent().parent().remove();
+                        PRO.removeforget();
+                    })
+                              // PRO.Prompt("token失效，请重新登录");
+                              // PRO.removeforget();
+                            }
+                            if(data['type']=='roomIn'){  //进入房间得到的操作
+                                result={
+                                    'type':'ping',
+                                    'token' :  user.token
+                                }
+                                user.ws.send(JSON.stringify(result));
+                                  var data= eval('(' + e.data + ')')
+                                 if(data.status == 200){
+                                  PRO.GetTable(data.table);
+                                 }else if(data.status == 100){
+                                PRO.Prompt("房间已经关闭,请选择其他房间");
+                                $("#"+user.room).hide();
+                            }
+                            }
+                            else if(data['type']=='ping'){     
+                                new_message = {
+                                      type : 'ping',
+                                      token :  user.token
+                                  };
+                              user.ws.send(JSON.stringify(new_message));
+                            }
+                            else if(data['type']=='tableIn'){  //进入桌子操作
+                                PRO.GameOp(data);
+                               //自动操作
+                               // $(".cbtn a").eq(2).click();
+                               // setInterval(function(){
+                               //  $("#startgame").click();
+                               // }, 3000);
+                            }
+                            else if(data['type']=='tableOut'){ //退出游戏
+                                PRO.reGame(data);
+                            }
+                            else if(data['type']=='gameStart'){// 开始游戏
+                                PRO.playGame(data);
+                            }
+                            else if(data['type']=='gameOver'){// 换牌
+                                PRO.changeGame(data);
+                            }
+                            else if(data['type']=='world'){// 世界消息
+                              PRO.wordInf(data);
+                            }
+                            else if(data['type']=='tableEntry'){  //桌实时更新状态推送：//只会推送给当前房间的用户
+
+                            }
+  
+                        };
 
                         var aid = $(this).attr("id");
                         var alvl = $(this).attr("level");
                         user.room = aid;
                         table.roomNum = parseInt(alvl);
-                        PRO.Requeset("roomStatus",0,{ name:user.id,room:user.room },function(msg){
-                             if(msg.status == 100){
-                                PRO.GetTable();
-                             }else if(msg.status == 104){
-                                PRO.Prompt("房间已经关闭,请选择其他房间");
-                                $("#"+user.room).hide();
-                             }
-                             //
-                        })
+
                         
                     });
 
@@ -317,6 +345,53 @@ PRO.GetRoom = function () {
 
 }
 
+/*
+*
+* 获取桌子
+*
+*/
+
+
+
+var k = 0; k2 = 0;
+PRO.GetTable = function(data){
+
+    $(".RoomData").hide();
+    $(".table_index").show();
+    PRO.Loading();
+    $(".titboxnb").text(table.roomNum);
+    $(".table_content ul").html("");
+   PRO.RmLoading(function(){
+    k = 1;
+    poker.tables = data;  //装桌子
+    poker.Recount = 0;
+    poker.bool = false;
+    PRO.Deskdata();
+    // $(window).scroll(function () {
+    //     if (($(window).height() + $(window).scrollTop()) > $("body").height() - 1) {
+    //          PRO.Deskdata();
+    //     }
+    //   });
+  })
+    // PRO.Requeset("gettable", 0 ,{name:user.id, room: user.room }, function (msg) {
+    //       PRO.RmLoading(function(){
+    //          if (msg.status == 100) {
+    //               k = 1;
+    //               poker.tables = msg.data.tables;  //装桌子
+    //               poker.Recount = 0;
+    //               poker.bool = false;
+    //               PRO.Deskdata();
+    //               $(window).scroll(function () {
+    //                   if (($(window).height() + $(window).scrollTop()) > $("body").height() - 1) {
+    //                       PRO.Deskdata();
+    //                   }
+    //               });
+    //          }
+            
+    //       })           
+    // });
+   
+}
 
 /*
 *  1秒向服务器请求目前桌子的状态
@@ -374,46 +449,12 @@ PRO.GetOneTable = function(){
                     poker.tables = msg.data.tables;
                });        
         }
-    },15000);
+    },15000);  
     
 }
 
 
-/*
-*
-* 获取桌子
-*
-*/
 
-
-
-var k = 0; k2 = 0;
-PRO.GetTable = function(){
-
-    $(".RoomData").hide();
-    $(".table_index").show();
-    PRO.Loading();
-    $(".titboxnb").text(table.roomNum);
-    $(".table_content ul").html("");
-    PRO.Requeset("gettable", 0 ,{name:user.id, room: user.room }, function (msg) {
-          PRO.RmLoading(function(){
-             if (msg.status == 100) {
-                  k = 1;
-                  poker.tables = msg.data.tables;  //装桌子
-                  poker.Recount = 0;
-                  poker.bool = false;
-                  PRO.Deskdata();
-                  $(window).scroll(function () {
-                      if (($(window).height() + $(window).scrollTop()) > $("body").height() - 1) {
-                          PRO.Deskdata();
-                      }
-                  });
-             }
-            
-          })           
-    });
-   
-}
 
 /*
 *
@@ -423,67 +464,151 @@ PRO.GetTable = function(){
 PRO.Deskdata = function(){
     var table_content = $(".table_content ul");
     var table = poker.tables,tclass = "";
+    var tableSort=PRO.changeJson(table); //格式转换
     var folz = parseInt(poker.Recount) * 50;
     var tolz = parseInt(poker.Recount + 1) * 50;
 
-    tolz >= table.length ? tolz = table.length : poker.Recount++;
-
+    tolz >= tableSort.length  ? tolz = tableSort.length : poker.Recount++;
+  
     if (poker.bool) { return; }
-        for (var i = folz ; i < tolz ; i++) {
-            table[i].status == 1 ? tclass = "hp" : tclass = "";
-            $('<li id="' + user.room + "-" + table[i].num + '" class="' + tclass + '"><span>' + table[i].num + '</span></li>').appendTo(table_content).click(function () {
-                var cl = $(this).attr("class");
-                var cid = $(this).attr("id");
-                var Rd = cid.split("-");
-
-                if (cl != "hp") {
-                   user.tableNum = Rd[1];  
-                  
+    for(var i=0;i<tableSort.length;i++){
+       tableSort[i].hp == 1 ? tclass = "hp" : tclass = "";
+       $('<li tbid="' + tableSort[i].tbid +'" class="' + tclass + '"><span>' + tableSort[i].tbid + '</span></li>').appendTo(table_content).click(function () {  
+              var cl = $(this).attr("class");
+              var cid = $(this).attr("tbid");
+              if (cl != "hp") {
+                   user.tableNum = cid;  
                    PRO.GameUi();
-                }
-            });
+              }
+       });
     }
+    //     for (var i = folz ; i < tolz ; i++) {
+    //         table[i].status == 1 ? tclass = "hp" : tclass = "";
+    //         $('<li id="' + user.room + "-" + table[i].num + '" class="' + tclass + '"><span>' + table[i].num + '</span></li>').appendTo(table_content).click(function () {
+    //             var cl = $(this).attr("class");
+    //             var cid = $(this).attr("id");
+    //             var Rd = cid.split("-");
 
-    (tolz == table.length) && (poker.bool = true);
+    //             if (cl != "hp") {
+    //                user.tableNum = Rd[1];  
+    //                PRO.GameUi();
+    //             }
+    //         });
+    // }
+
+    // (tolz == Object.keys(table).length) && (poker.bool = true);
+}
+/*
+*
+* 格式装换 =》针对 桌子
+* 
+*/
+
+PRO.changeJson=function(obj){
+var table=obj;
+var tablebox=[];
+var j=0;
+for(var i in table){
+  tablebox[j]={"tbid":i,"hp":table[i]}
+  j++;
+}
+var tableSort=tablebox.sort(getSortFun('asc', 'tbid'));
+return tableSort;
 }
 
+/*
+*
+* 排序=》针对 桌子
+* 
+*/
+
+function getSortFun(order, sortBy) {
+  var ordAlpah = (order == 'asc') ? '>' : '<';
+  var sortFun = new Function('a', 'b', 'return a.' + sortBy + ordAlpah + 'b.' + sortBy + '?1:-1');
+  return sortFun;
+}
 /*
 *
 * 进入桌子
 * 
 */
-PRO.GameUi = function(){
- 
+PRO.GameUi = function(){  
+    
+      new_message = {
+            type : 'tableIn',
+            token :  user.token,
+            table_id :user.tableNum
+        };
+      user.ws.send(JSON.stringify(new_message));
+  
+
 
     //clearInterval(continuedTime);
 
-    PRO.Requeset("jointable", 0 ,{ room: user.room, num: user.tableNum,name:user.id }, function (msg) {
+    // PRO.Requeset("jointable", 0 ,{ room: user.room, num: user.tableNum,name:user.id }, function (msg) {
 
-        if (msg.status == 100) { 
-              if(msg.data.status == 1){
-                  PRO.Prompt('房间已经有人了,请选择其他房间');
+    //     if (msg.status == 100) { 
+    //           if(msg.data.status == 1){
+    //               PRO.Prompt('房间已经有人了,请选择其他房间');
                  
-                  $("#"+user.room+"-"+user.tableNum).addClass("hp");
-                 user.tableNum = 0;
-              }else{
-                    $(".table_index").hide();
-                    $(".startGame").show();
-                    $(".usezi .p1").text(user.Chips);
-                    $(".usezi .p4").text(user.Chips);
-                    $(".usezi .p2").text(user.room+"-"+user.tableNum);
-                    $(".cbtn a").eq(1).text("加" + table.roomNum + "积分");
-                    $(".cbtn a").eq(2).text("加" + (table.roomNum * 10) + "积分");
-                  //进人游戏界面  
-                  k2 = 1;
-              };
+    //               $("#"+user.room+"-"+user.tableNum).addClass("hp");
+    //              user.tableNum = 0;
+    //           }else{
+    //                 $(".table_index").hide();
+    //                 $(".startGame").show();
+    //                 $(".usezi .p1").text(user.Chips);
+    //                 $(".usezi .p4").text(user.Chips);
+    //                 $(".usezi .p2").text(user.room+"-"+user.tableNum);
+    //                 $(".cbtn a").eq(1).text("加" + table.roomNum + "积分");
+    //                 $(".cbtn a").eq(2).text("加" + (table.roomNum * 10) + "积分");
+    //               //进人游戏界面  
+    //               k2 = 1;
+    //           };
             
-        }
-    });  
+    //     }
+    // });  
+}
+
+PRO.GameOp = function(data){ //得到桌子信息时相应的操作
+    if(data.status == 100){
+        PRO.Prompt('房间已经有人了,请选择其他房间');
+        $("#"+user.room+"-"+user.tableNum).addClass("hp");
+       user.tableNum = 0;
+    }
+    else if(data.status == 200){
+          $(".table_index").hide();
+          $(".startGame").show();
+          $(".usezi .p1").text(user.Chips);
+          $(".usezi .p4").text(user.Chips);
+          $(".usezi .p2").text(user.room+"-"+user.tableNum);
+          $(".cbtn a").eq(1).text("加" + table.roomNum + "积分");
+          $(".cbtn a").eq(2).text("加" + (table.roomNum * 10) + "积分");
+        //进人游戏界面  
+        k2 = 1;
+    };
+
 }
 
 
+//游戏退出返回事件
+PRO.reGame=function(data){
+  PRO.GetTable(data.data);
+   var tp = parseInt($(".usezi .p5 span").text());
+        if(data.status == 200 ){
+            user.Chips = parseInt(user.Chips)+tp;
+            user.tableNum = 0;
+            table.bet = 0;      
+            StartAgain();
+            $(".startGame").hide();
+            $(".table_index").show();
+             $(".idfra .icount").text(user.Chips);      
+           // PRO.GetOneTable();
+        }
+        else if(data.status == 100){
+           PRO.Prompt('退出失败');
+        }
 
-
+}
 
 /*
 *
@@ -500,9 +625,15 @@ PRO.EventTrigger = function(){
         $(".startPage").hide();
     });
 
-    $(".table_return").click(function () {  //返回房间事件
+    $(".table_return").click(function () {  //退出房间事件
         $(".table_index").hide();
         $(".RoomData").show();
+          new_message = {
+              type : 'roomOut',
+              token :  user.token,
+              room_id :user.tables
+          };
+          user.ws.send(JSON.stringify(new_message));
     })
 
     $(".guanbi").click(function(){
@@ -521,7 +652,6 @@ PRO.EventTrigger = function(){
     });
 
     $(".table_null").click(function () {    //全部桌子或空桌子
-      console.log(1);
         if ($(".table_null").text() == "全部") {       //$(".table_content ul li").is(":hidden")
             $(".hp").show();
             $(".table_null").text("空桌");
@@ -566,20 +696,26 @@ PRO.EventTrigger = function(){
     $(".cardbtn #goout").click(function () {  //退出游戏按钮
          var tp = parseInt($(".usezi .p5 span").text());
         if (kongge == 0 ) {
-            PRO.Requeset("outTable",0, { name:user.id,room: user.room, tableNo: user.tableNum }, function (msg) {
-                    if(msg.status == 100 ){
-                        user.Chips = parseInt(user.Chips+tp);
-                        user.tableNum = 0;
-                        table.bet = 0;
+            new_message = {
+            type : 'tableOut',
+            token : user.token
+            };
+          user.ws.send(JSON.stringify(new_message));
+
+            // PRO.Requeset("outTable",0, { name:user.id,room: user.room, tableNo: user.tableNum }, function (msg) {
+            //         if(msg.status == 100 ){
+            //             user.Chips = parseInt(user.Chips+tp);
+            //             user.tableNum = 0;
+            //             table.bet = 0;
                         
-                        StartAgain();
-                        $(".startGame").hide();
-                        $(".table_index").show();
-                         $(".idfra .icount").text(user.Chips);
+            //             StartAgain();
+            //             $(".startGame").hide();
+            //             $(".table_index").show();
+            //              $(".idfra .icount").text(user.Chips);
                        
-                       // PRO.GetOneTable();
-                    }
-            })
+            //            // PRO.GetOneTable();
+            //         }
+            // })
        }
         else {
             PRO.Prompt("游戏已经开始了，暂时无法退出");
@@ -639,9 +775,7 @@ PRO.playSound = function(){         //加分
     if(poker.bool2){
         $(".usezi .p4").text(user.Chips);
             $(".cbtn a").eq(1).unbind("click").click(function () {  //加1分
-             
-                PRO.Plus(table.roomNum);
-           
+                PRO.Plus(table.roomNum);     
             });
             $(".cbtn a").eq(2).unbind("click").click(function () {  //加1分
                 PRO.Plus((table.roomNum * 10));
@@ -725,134 +859,13 @@ PRO.StartGame = function(){   //防止2次点击 需要做  手机网络不行
                     poker.bool2 = false;    //防止继续加分操作
                     kongge = 9;
                     PRO.typePlus();
+                     new_message = {
+                      type : 'gameStart',
+                      token : user.token,
+                      integral : table.bet
+                      };
+                    user.ws.send(JSON.stringify(new_message));
 
-                  //  var u = 0;
-                  //  var soundb = new Audio("audio/123.mp3");
-
-                   // setInterval(function(){
-                    //    soundb.src = "audio/"+u+".mp3";
-                    //soundb.play();
-                     //   u++;
-                   // },200);
-
-
-
-                    // var onEnded = function() {
-                    //     u++;
-                    //     this.src= "audio/"+u+".mp3";
-                    //     this.play();
-                    // };
-                    // soundb.addEventListener('ended', onEnded, false);
-                    //var u = 0;
-                    // var baudio = setInterval(function(){
-
-                    //     if(u>=5){
-                    //       clearInterval(baudio);
-                    //       return ;
-                    //     }
-                    //     if(u==0){
-                    //       sound = new Audio("audio/"+u+".mp3");
-                    //     }else{
-                    //        sound.src = "audio/"+u+".mp3"
-                    //     }
-                    //     sound.load();
-                    //     sound.play();  
-                    //     u++;
-                       
-                        
-                      
-                       
-                        
-                    // },200);
-
-
-
-                 //    function getData3(){
-                 //           var defer = $.Deferred();
-                 //            $.ajax({
-                 //                url : 'http://yifa2017.uk/fpj/index.php/Home/Game/gameStart?token='+user.token,
-                 //                 type: "post",
-                 //                timeout:2000,
-                 //                data:{ name: user.id, itg: table.bet,room: user.room, tableNo: user.tableNum },
-                 //                success: function(data){
-                 //                   defer.resolve(data)
-                 //                }
-                 //                // ,
-                 //                // error:function(r){
-                 //                //    PRO.Prompt('网络太慢,正在努力加载中',2);
-                 //                // },
-                 //                // complete:function(XMLHttpRequest,status){
-                 //                //     if(status == 'timeout' || status == 'error'){   //超时和断网和链接不上 都统一算超时
-                 //                //         PRO.Prompt('网络异常,请稍后再试',2);
-                 //                //     }
-                 //                // }
-                 //      });
-                 //        return defer.promise();
-                 //    }  
-                    
-                 
-                 //    //var soundb = new Audio("audio/123.mp3");
-                 // //   soundb.play();
-                 //    $.when(getData3()).done(function(msg){
-                 //          if(msg.status==100){
-                 //                 if(NetProblemBool==false){
-                 //                        NetProblemBool = true;
-                 //                        KCount = true;
-                 //                        $(".prompt").remove();
-                 //                  }
-
-                 //                 PRO.initGame();  //初始化游戏
-                 //                 poker.bool2 = false;
-                 //                 kongge = 9;
-                 //                 poker.pkcode = "";
-
-                 //                 poker.pkcode = msg.data.pkcode;
-                                
-                 //                 PRO.shengyiFUCK();
-                                 
-                               
-                 //                 var faulimg = $(".faul li div img");
-                 //                 PRO.FlipPoker(faulimg,poker.pkcode.length,1);     
-                 //            }
-                 //    });
-                 //    console.log(1);
-
-
-              
-
-                    PRO.Requeset6("gameStart", 2000 ,{ name: user.id, itg: table.bet,room: user.room, tableNo: user.tableNum }, function (msg) {   //获取牌
-                            if(msg.status==100){
-                                 if(NetProblemBool==false){
-                                        NetProblemBool = true;
-                                        KCount = true;
-                                        $(".prompt").remove();
-                                  }
-
-                                 PRO.initGame();  //初始化游戏
-                                 poker.bool2 = false;
-                                 kongge = 9;
-                                 poker.pkcode = "";
-
-                                 poker.pkcode = msg.data.pkcode;
-
-                                 var faulimg = $(".faul li div img");
-                                 // var soundb = new Audio("audio/123.mp3");
-                                 // soundb.play();
-                                 
-                                PRO.shengyiFUCK(); 
-                                 PRO.FlipPoker(faulimg,poker.pkcode.length,1);   
-
-                            }
-                            else if(msg.status==101){
-                                 PRO.Prompt('积分不足,请及时充值');
-                            }
-                    },function(){
-                            NetProblemBool = false;
-                            kongge = 0;
-                            $(".cbtn a").eq(0).click();
-                            kongge = 9;
-                            PRO.Prompt('网络太慢,正在努力加载中',2);
-                    })
                 } 
             }
             else{
@@ -861,11 +874,39 @@ PRO.StartGame = function(){   //防止2次点击 需要做  手机网络不行
         }else if(kongge == 1){
              PRO.HCard();  //获取换牌 
         }else if(kongge == 5){  //没分
-            PRO.Prompt("请退出游戏充值分数")
+            PRO.Prompt("请退出游戏充值分数");
         }
     })
 }
 
+PRO.playGame=function(data){
+
+      if(data.status==200){
+         if(NetProblemBool==false){
+                NetProblemBool = true;
+                KCount = true;
+                $(".prompt").remove();
+          }
+
+         PRO.initGame();  //初始化游戏
+         poker.bool2 = false;
+         kongge = 9;
+         poker.pkcode = "";
+
+         poker.pkcode = data.pkcode;
+
+         var faulimg = $(".faul li div img");
+         // var soundb = new Audio("audio/123.mp3");
+         // soundb.play();
+         
+        PRO.shengyiFUCK(); 
+        PRO.FlipPoker(faulimg,poker.pkcode.length,1);   
+
+            }
+            else if(data.status==101){
+                 PRO.Prompt('操作无效');
+            }
+}
 
 PRO.typePlus = function () {
     $(".intUl").eq(0).find("li").eq(0).find("span").eq(1).text(mon.Five * table.bet);   //五条
@@ -886,31 +927,30 @@ PRO.FlipPoker = function(faulimg,NUM,COUNT){
     var i = 0;
   //  if(i == 0){ }
 
-    if(bk<NUM){   
-         
+    if(bk<NUM){        
              i = bk;
-            
-            faulimg.eq(i).transition({"opacity":"1"},200,function(){
-                 faulimg.eq(i).attr("src", "images/" + poker.pkcode[i] + ".jpg");
+                faulimg.eq(i).transition({"opacity":"1"},200,function(){
+                
+                 if(COUNT==1){
+                  faulimg.eq(i).attr("src", "images/" + poker.pkcode[i] + ".jpg");
                  faulimg.eq(i).attr("id", poker.pkcode[i]); 
+                 }
+                 if(COUNT==2){
+                 faulimg.eq(i).attr("src", "images/" + poker.pkcode[faulimg.eq(i).parents("li").index()] + ".jpg");
+                 faulimg.eq(i).attr("id", poker.pkcode[faulimg.eq(i).parents("li").index()]); 
+                 }
 
-                  bk++;
-                 
-
-
+                  bk++;     
                  if(i>=NUM-1){
                      if(COUNT == 1 ){                     //   开始发牌
-                       
+                        
                         $(".cbtn a").eq(0).text("开始换牌");
                         PRO.changgePoker();
                         kongge = 1;  //此时可以换牌操作
                         heldArray = selected(poker.pkcode);
                         PRO.Selheld(heldArray);
-                        
                  }
                  else if(COUNT == 2 ){              //开始换牌
-
-                       
                         PRO.CanCelTwi();
                         PRO.pokerType(table.type);  //牌型闪动
                         heldArray = selected(poker.pkcode);
@@ -931,7 +971,7 @@ PRO.FlipPoker = function(faulimg,NUM,COUNT){
         }
 }
 
-PRO.Selheld = function(heldArray){
+PRO.Selheld = function(heldArray){  //出现held
    // var 
     $(".faul img").removeAttr("held");
      $(".faul span").css("visibility","hidden");
@@ -1039,8 +1079,8 @@ PRO.pokerType = function(type){
 PRO.HCard  = function(){
     if(kongge==1){
         kongge = 8;
-        var pokerBox = $(".faul li div img").not($(".faul li div img[held=true]"));  
-
+        var pokerBox_z = $(".faul li div img").not($(".faul li div img[held=true]"));  
+        var pokerBox =$(".faul li div img[held=true]");
         if(pokerBox.length != 0){   //没选中
             poker.clickCode = "";
             for (var i = 0 ; i < pokerBox.length; i++) {
@@ -1050,56 +1090,127 @@ PRO.HCard  = function(){
          if(pokerBox.length == 0){
             poker.clickCode = ""; 
         }
-
-        
-      
-
-         PRO.Requeset("cardDel", 2000,{ name: user.id, str: poker.clickCode, room: user.room, tableNo: user.tableNum }, function (msg) {   //获取换的牌
-                console.log(msg.status);
-                if(msg.status == 100 ) {
-                        if(NetProblemBool==false){
-                              NetProblemBool = true;
-                              KCount = true;
-                              $(".prompt").remove();
-                         }
-                        poker.pkcode = msg.data.pkcode;
-                        table.count = msg.data.iswin;    //获得当前得分
-                        table.type = msg.data.pktype;     //获得当前牌型
-                         //poker.pkcode= [3,26,14,27,13];  //'20', '48', '7', '17', '4'  //['20', '48', '7', '17', '4'];
-                        poker.jp = msg.data.pkjp;       //是否Jp? msg.data.pkjp;
-                        kongge = 8;
-                         //$("#pokerSound1")[0].play();
-                        if(pokerBox.length != 0){
-                            for (var i = 0; i < pokerBox.length; i++) {      //翻转之前 先盖牌
-                                 pokerBox.eq(i).attr("src", "images/pg.png");
+         new_message = {
+            type : 'gameOver',
+            token : user.token,
+            str : poker.clickCode
+            };
+          user.ws.send(JSON.stringify(new_message));
+         // PRO.Requeset("cardDel", 2000,{ name: user.id, str: poker.clickCode, room: user.room, tableNo: user.tableNum }, function (msg) {   //获取换的牌
+         //        console.log(msg.status);
+         //        var j=0;
+         //        if(msg.status == 100 ) 
+         //        {
+         //                if(NetProblemBool==false){
+         //                      NetProblemBool = true;
+         //                      KCount = true;
+         //                      $(".prompt").remove();
+         //                 }
+         //                for(var i in msg.data.pkcode){
+         //                   poker.pkcode[j]= msg.data.pkcode[i];
+         //                   j++;
+         //                } 
+         //                 // poker.pkcode= msg.data.pkcode;
+         //                table.count = msg.data.iswin;    //获得当前得分
+         //                table.type = msg.data.pktype;     //获得当前牌型
+         //                 //poker.pkcode= [3,26,14,27,13];  //'20', '48', '7', '17', '4'  //['20', '48', '7', '17', '4'];
+         //                poker.jp = msg.data.pkjp;       //是否Jp? msg.data.pkjp;
+         //                kongge = 8;
+         //                 //$("#pokerSound1")[0].play();
+         //                if(pokerBox_z.length != 0){
+         //                    for (var i = 0; i < pokerBox_z.length; i++) {      //翻转之前 先盖牌
+         //                         pokerBox_z.eq(i).attr("src", "images/pg.png");
                                  
                               
-                            }
+         //                    }
                             
-                            PRO.shengyiFUCK();
-                            PRO.FlipPoker(pokerBox,pokerBox.length,2);  
-                        }else{
-                            PRO.seMethod();  //结算
-                        }
-                }
-           else if(msg.status == 101){
-                   PRO.Prompt('服务器异常，重新发牌');
-                   PRO.initGame();  //重新开始
-                }
-         },function(){
-                 NetProblemBool = false;
-                 kongge = 1;
-                 PRO.HCard();
-                 kongge = 8;
-                 PRO.Prompt('网络太慢,正在努力加载中',2);
+         //                    PRO.shengyiFUCK();
+         //                    PRO.FlipPoker(pokerBox_z,pokerBox_z.length,2);  
+         //                }else{
+         //                    PRO.seMethod();  //结算
+         //                }
+         //        }
+         //        else if(msg.status == 101){
+         //           PRO.Prompt('服务器异常，重新发牌');
+         //           kongge=1;
+         //           PRO.HCard();
+         //          kongge=8;
+
+         //        }
+         //        else if(msg.status == 102){
+         //          var p2text=$(".p2").text();
+         //          var sp=p2text.split("-")
+         //           PRO.Prompt('服务器异常，重新开始游戏');
+         //           PRO.initGame();  //重新开始
+         //           table.num=sp[1];
+         //        }
+         // },function(){
+         //         NetProblemBool = false;
+         //         kongge = 1;
+         //         PRO.HCard();
+         //         kongge = 8;
+         //         PRO.Prompt('网络太慢,正在努力加载中',2);
                  
                  
-         });         
+         // });         
     }
 }
         
 
+ PRO.changeGame=function (data){  //接受消息换牌操作
+      var j=0;
+      var pokerBox_z = $(".faul li div img").not($(".faul li div img[held=true]"));  
+      var pokerBox =$(".faul li div img[held=true]");
+      if(data.status == 200 ) 
+            {
+               if(NetProblemBool==false){
+                          NetProblemBool = true;
+                          KCount = true;
+                          $(".prompt").remove();
+                     }
+                     for(var i in data.data.pkcode){
+                        var elIndex=pokerBox_z.eq(j).parents("li").index();
+                         poker.pkcode[elIndex]=data.data.pkcode[i];
+                        j++;
+                     }
+                     // for(var i=0;i<data.data.pkcode.length;i++){
+                      
+                     //    poker.pkcode[elIndex]=data.data.pkcode[i];
+                     // }
+                    // for(var i in data.data.pkcode){
+                    //    poker.pkcode[j]= data.data.pkcode[i];
+                    //    j++;
+                    // } 
+                     // poker.pkcode= msg.data.pkcode;
+                    table.count = data.data.iswin;    //获得当前得分
+                    table.type = data.data.pktype;     //获得当前牌型
+                     //poker.pkcode= [3,26,14,27,13];  //'20', '48', '7', '17', '4'  //['20', '48', '7', '17', '4'];
+                    poker.jp = data.data.pkjp;       //是否Jp? msg.data.pkjp;
+                    kongge = 8;
+                     //$("#pokerSound1")[0].play();
+                    if(pokerBox_z.length != 0){
+                        for (var i = 0; i < pokerBox_z.length; i++) {      //翻转之前 先盖牌
+                             pokerBox_z.eq(i).attr("src", "images/pg.png");
+                        }
+                        
+                        PRO.shengyiFUCK();
+                        PRO.FlipPoker(pokerBox_z,pokerBox_z.length,2);  
+                    }else{
+                        PRO.seMethod();  //结算
+                    }
+            }
+            else if(data.status == 100){
+              var p2text=$(".p2").text();
+              var sp=p2text.split("-")
+               PRO.Prompt('服务器异常，重新开始游戏');
+               PRO.initGame();  //重新开始
+               table.num=sp[1];
+            }
+          else if(data.status == 400){
+               PRO.Prompt('不在桌内');
+          }
 
+ }
 
 
 
@@ -1228,7 +1339,7 @@ PRO.settlementChip = function(){
 
 
 
-PRO.initGame = function(){
+PRO.initGame = function(){  //初始化  
     $(".faul .peimg").attr("src", "images/pg.png");
     $(".faul span").css("visibility","hidden");
     $(".faul img").removeAttr("held");
@@ -1271,5 +1382,6 @@ StartAgain = function () {  //换个房间再来  归零
 
     PRO.initGame();
 }
+
 
 

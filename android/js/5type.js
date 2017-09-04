@@ -1,4 +1,4 @@
-function selected(selarr) {
+﻿function selected(selarr) {
     var pokers = selarr;
     var c_pk_color = new Array();
     var c_pk_point = new Array();
@@ -14,7 +14,7 @@ function selected(selarr) {
 
     function bbb() {
         for (var i = 0; i < pokers.length; i++) {
-            if (pokers[i] > 52) {
+            if (pokers[i] > 140) {
                 new_pokers.push(pokers[i]);
             }
         }
@@ -26,22 +26,18 @@ function selected(selarr) {
         }
         return new_pokers;
     }
-    function card(parr) {
-        //pokers=parr;
-        //pokers = ['4','17','28','30','13'];//五张扑克牌
+    
+    function card() {
         var pk_color = [];//存储扑克花色
         var pk_point = [];//存储扑克点数
         var njoker = [];
         for (var key in pokers) {
-            if (typeof pokers[key] != "number") {//如果不是数字转化为数字
-                pokers[key] = Number(pokers[key]);
-            }
-            if (pokers[key] < 53) {
+            if (pokers[key] < 141) {
+                var z=pokers[key].substring(0,pokers[key].length-1); //牌
+                var h=pokers[key].substr(-1,1); //花色
                 njoker.push(pokers[key]);
-                var s = parseInt(pokers[key] / 13);//商
-                var y = pokers[key] % 13;//余
-                var z = y > 0 ? y + 1 : 14;//对应点数
-                var h = y > 0 ? s + 1 : s;//对应花色
+                z=Number(z);
+                h=Number(h);
                 pk_color.push(h);
                 pk_point.push(z);
             }
@@ -77,6 +73,15 @@ function selected(selarr) {
         return a - b
     }
 
+        function ato14(arr){
+        var d;
+        if(arr[0]==1){
+            d=14-arr[1];
+        }else{
+            d=end(arr)-arr[0];
+        }
+        return d;
+    }
     //判断牌型
     var copyArr = [];
     function cardType(arr, is_Th) {
@@ -91,7 +96,7 @@ function selected(selarr) {
             des = ccc(oneto4);
             des.push('300');
             return des;
-        } else if (is_Th == 1 && D_value <= 4 && end(num) == 1 && copyArr[0] > 9) { // 10 J Q K A 同花大顺200
+        } else if ((is_Th == 1 && ato14(copyArr) <= 4 && end(num) == 1 && copyArr[0] == 1 && copyArr[1] > 9)||(is_Th == 1 && ato14(copyArr) <= 4 && end(num) == 1 && copyArr[0] > 9) ) { // 10 J Q K A 同花大顺200
             des = ccc(oneto4);
             des.push('200');
             return des;
@@ -155,7 +160,7 @@ function selected(selarr) {
             des = ccc(ss);
             des.push('2');
             return des;
-        } else if ((end(num) == 2 && c_key > 10) || (end(num) == 1 && c_arr == 4 && end(copyArr) > 10)) {
+        } else if((end(num) == 2 && c_key > 10)||(end(num) == 2 && c_key == 1) || (end(num) == 1 && c_arr == 4 && end(copyArr) > 10)||(end(num) == 1 && c_arr == 4 && copyArr[0] == 1)) {
             if (c_arr == 4) {
                 des = ccc(aaa(end(copyArr)));
             } else {
@@ -196,10 +201,12 @@ function selected(selarr) {
 
     function AtoOne(arr) {//把A本为14 转为1
         var difference;
-        var A = end(arr);
-        if (A == 14) {
-            A = 1;
-            difference = arr[arr.length - 2] - A;
+        //var A = end(arr);
+        var A = arr[0];
+        if (A == 1) {
+            A = 14;
+            //difference = arr[arr.length - 2] - A;
+            difference = A - arr[1];
         } else {
             difference = end(arr) - arr[0];
         }
@@ -346,6 +353,8 @@ function GetDateDiff(startTime, endTime, diffType) {
     }
     return parseInt((eTime.getTime() - sTime.getTime()) / parseInt(divNum));
 }
+
+
 
 
 // var result = GetDateDiff("2017-03-07 22:16:00", new Date().format("yyyy-MM-dd hh:mm:ss"), "second");

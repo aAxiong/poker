@@ -3,7 +3,6 @@
 *
 *  相对HTML font-size
 */
-
 (function (doc, win) {
     var docEl = doc.documentElement,
         resizeEvt = 'orientationchange' in window ? 'orientationchange' : 'resize',
@@ -68,9 +67,10 @@ var NetProblemBool = true,KCount = true;
 *  @param fn 回调函数
 */
 
+
 PRO.Requeset3 = function (url,time, data, fn,fncomplete) {
     $.ajax({
-        url: 'http://yifa2017.uk/fpjadmin/admin.php/proxy/' + url,
+        url: 'http://139.199.6.159/fpjadmin/admin.php/proxy/' + url,
         type: "post",
         timeout:time,
         data: data,
@@ -92,7 +92,7 @@ PRO.Requeset3 = function (url,time, data, fn,fncomplete) {
 
 PRO.Requeset2 = function (url,time, data, fn,fncomplete) {
     $.ajax({
-        url: 'http://yifa2017.uk/fpjadmin/admin.php/admin/' + url,
+        url: 'http://139.199.6.159/fpjadmin/admin.php/admin/' + url,
         type: "post",
         timeout:time,
         data: data,
@@ -116,7 +116,7 @@ PRO.Requeset2 = function (url,time, data, fn,fncomplete) {
 
 PRO.Requeset6 = function (url,time, data, fn,fncomplete) {
     var b = "";
-    url == "version" ? b = "http://yifa2017.uk/fpj/index.php/Home/Redis/"+url : b = 'http://yifa2017.uk/fpj/index.php/Home/Game/'+url+'?token='+user.token;
+    url == "version" ? b = "http://139.199.6.159/fpj/index.php/Home/Redis/"+url : b = 'http://139.199.6.159/fpj/index.php/Home/Game/'+url+'?token='+user.token;
 
     // var defer = $.Deferred();
     $.ajax({
@@ -143,7 +143,7 @@ PRO.Requeset6 = function (url,time, data, fn,fncomplete) {
 
 PRO.Requeset = function (url,time, data, fn,fncomplete) {
     var b = "";
-    url == "version" ? b = "http://yifa2017.uk/fpj/index.php/Home/Redis/"+url : b = 'http://yifa2017.uk/fpj/index.php/Home/Game/'+url+'?token='+user.token;
+    url == "version" ? b = "http://139.199.6.159/fpj/index.php/Home/Redis/"+url : b = 'http://139.199.6.159/fpj/index.php/Home/Game/'+url+'?token='+user.token;
 
     $.ajax({
         url: b,
@@ -218,47 +218,17 @@ var Xcount = 0;  //消息第一次的数量
 
 
 
-/*世界消息*/  //还需要做一个如果在这一分钟出现的消息要先提前。然后出现
+/*世界消息*/
 
 //user.token
 
 var lunxun = true;
 
-PRO.gongxi = function(){
+PRO.gongxi = function(data){  // data 内容    user_id : 'HUA01',  wutiao : '200'//根据倍率判断是同花顺还是五条
     px = [];
-    PRO.Requeset("message", 0 ,{name:user.id}, function (msg) { 
-        //console.log(msg);
-      
         lunxun  = true;
      
-
         PRO.voucher(msg.status);
-
-        if(msg.status == 404){ four = false;  }   
-
-        if(msg.status == 100){
-            var data = msg.data.msg;
-            user.online =  msg.data.online;
-
-            if(msg.data.total!=user.Chips && (betCount == 0 || betCount == 2) &&  kongge == 0 ){
-                $(".icount").text(msg.data.total);
-                $(".usezi .p4").text(msg.data.total);
-                user.Chips = msg.data.total;
-            };
-
-
-
-          if(user.tableNum!=0 && k2 == 1){
-               if(user.online == 0){
-                    k2=3;
-                    $('<div class="chaoshi"><div class="chaobg"><p>您已经超过一小时未操作,系统将你移出桌子</p><div class="chaobtn">确定</div></div></div>').appendTo($("body"));
-                    $(".chaobtn").click(function(){
-                        $(".cardbtn #goout").click();
-                        $(this).parent().parent().remove();
-                    })
-               }
-           }
-            
             if(data.length !=0){
              for(var i = 0; i <data.length;i++){
                     var time = GetDateDiff(data[i].message_date, new Date().format("yyyy-MM-dd hh:mm:ss"), "second");
@@ -274,14 +244,11 @@ PRO.gongxi = function(){
                     if(data[i].type == 10){  //一直循环播放type=10 的消息
                         px.push(data[i]);
                     }
-                    //这种结果是这段时间内没有人获胜，然后选择最后一个
-                    // if( i >= (data.length - 1) && px == ""){  
-                    //     px.push(data[data.length-1]);
-                    // }
+              
               }
               if(px.length < 5) gCount = 0;
               if(px.length > 10 && gCount > 2 ){   //如果消息过多 滚动减少
-                  // px = px.slice(-5);  //返回最后5个
+                
                   if((gCount+4)>px.length){
                       gCount = gCount;
                   }
@@ -296,21 +263,107 @@ PRO.gongxi = function(){
                   
               }
             }
-        }  
-    });
-    // if(IC == 1){  //世界消息
-    //   var id = '';
-    //   var ib = '';  
-    // }
-    
-    // var html = '<div class="gongxi">恭喜<span>'+id+'</span>中了<span>'+ib+'</div>';
-    // $(html).appendTo($("body")).animate({"right":"0%"},1000,function(){
-    //     $(this).delay(3000).animate({"right":"100%"},500,function(){
-    //         $(this).remove();
-    //     });
-    // });
-    //$(html).
 }
+
+
+var word = [];   //这里世界消息放入的地方  
+var word2 = [];  //5秒内出现的数据。。 滚动的时候出现消息  提前出现
+var gcount = 3;   //默认都滚动3次    //滚动3次消失
+var num = 0;     //记录数组滚动到的条目
+
+PRO.wordInf = function(data){   //user_id : 'HUA01',  wutiao : '200'//根据倍率判断是同花顺还是五条
+    // word = data;
+
+    // if(data.length !=0){  //获取到世界消息
+      // var data=data.data;
+      //数据每次只存在单条  
+      //一来消息全部放在 第二个数组  word2  然后滚动过后消失、、word2 数组没有数据就滚动word  数组
+      word2.push(data);       // word2 = [0,0]; 
+
+      //消息存入第二个数组  并且记录次数
+      word.push([data,0]);    
+
+      //执行滚动函数
+       if(word2.length<=1){   //此时第二条数据追加   
+           PRO.wordqu(data);   //传入数据
+      }
+   // }
+};
+
+PRO.wordqu = function(data){
+     var  d = data,html,user,content; 
+
+     user = d.user_id;  //用户
+     content = d.wutiao =="200"?'同花大顺':'五条';  //内容
+
+     html = '<span class="zw">恭喜<span>'+user+'</span>中了<span>'+content+'</span>';
+
+     //下面函数 处理滚动次数  消息提前 
+     PRO.wordmove(html);
+}
+
+PRO.wordmove = function(HTML){
+    $(".gongxi").remove();
+     var WinWidth = $(window).width();   //获取到屏幕宽度
+     var htmlcon = HTML;                 //获取到内容
+     var htmllen = parseInt(($(htmlcon)[0].innerHTML.length) * 16);    //获取到内容的长度 
+     var htmlTime = (WinWidth + htmllen) * 7 ;                         //滚完这条内容的时间
+     var htmlDiv  = $('<div class="gongxi"></div>').appendTo($("body"));
+     $(htmlcon).appendTo(htmlDiv).css({"marginLeft":WinWidth}).stop().animate({"marginLeft":-htmllen+"px"},htmlTime,"linear",function(){
+          if(word2.length>=1) {    // 
+              word2.splice(0,1);    //滚动完  删除第一个 
+
+              //删除完判断word2 还有没有数据  这里的操作就是能消息提前推送
+              if(word2.length>0){  
+                  PRO.wordqu(word2[0]);   //再次执行
+              }
+              else{
+                  if(word.length>0){       //模拟数据  num = 1     word = [["222",2],["4444",2],["55555",3],["6666",3]]  
+                      if(word[num][1] == 3){    //如果等于3
+                          word.splice(0,1);    //删除掉第一个  此时num = 0; 
+
+                      }
+                      //可能出现这是最后一个
+                      if(word.length>0){
+                            PRO.wordqu(word[num][0]);   //重复执行   直到滚动3次
+                            word[num][1] +=1;        //滚动次数增加 
+                            ++num;   //滚动完++  
+                            if(num>word.length){  //重复滚动  第二次执行
+                               num  = 0;
+                            }
+                      }
+                  }
+                  else{   
+                    $(".gongxi").remove();
+                  }
+              }
+          }
+          $(".gongxi").remove();
+     }); 
+}
+
+
+
+// PRO.gMOVE = function(html,k){
+//     var WinWidth = $(window).width();
+//     var html = html; 
+//      var Whtml = parseInt(($(html)[0].innerHTML.length) * 16);
+//      var Totime = (WinWidth+Whtml) * 7;
+//      var gongxi = $('<div class="gongxi"></div>').appendTo($("body"));
+//      $(html).appendTo(gongxi).css({"marginLeft":WinWidth}).stop().animate({"marginLeft":-Whtml+"px"},Totime,"linear",function(){
+//          gongxi.remove();
+//          if(k==0){
+//             ++y;
+//          }else if(k==1){
+//              px2.splice(0,1);
+//          }
+         
+//          gCount++;  //如果gCount = 2  消息过多 不滚动多次
+//          PRO.Gungongxi();
+//      });
+// }
+
+
 var GDTime = null;          
 
 
@@ -329,6 +382,7 @@ var y = 0;
 
 
 PRO.Gungongxi = function(){
+    
     
 
     if(px.length>0){
